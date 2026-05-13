@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zähneputzen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --font-body: 'Nunito', 'Arial Rounded MT Bold', sans-serif;
+      --color-bg: #f0f8ff;
+      --color-surface: #ffffff;
+      --color-primary: #4fc3f7;
+      --color-primary-dark: #0288d1;
+      --color-text: #1a2a3a;
+      --color-text-muted: #5a7a9a;
+      --color-success: #66bb6a;
+      --color-mint: #e0f7fa;
+      --radius-xl: 1.5rem;
+      --radius-full: 9999px;
+      --shadow-card: 0 8px 32px rgba(0,140,200,0.13);
+      --transition: 200ms cubic-bezier(0.16,1,0.3,1);
+    }
+
+    html, body {
+      min-height: 100dvh;
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 1.5rem;
+      background: linear-gradient(160deg, #e0f7fa 0%, #f0f8ff 50%, #e8f5e9 100%);
+    }
+
+    /* Decorative bubbles */
+    .bubbles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.18;
+      animation: float linear infinite;
+    }
+    @keyframes float {
+      0%   { transform: translateY(110vh) scale(0.8); opacity: 0; }
+      10%  { opacity: 0.18; }
+      90%  { opacity: 0.12; }
+      100% { transform: translateY(-20vh) scale(1.1); opacity: 0; }
+    }
+
+    /* Card */
+    .card {
+      position: relative;
+      z-index: 1;
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
+      padding: 2.5rem 2rem 2.5rem;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .toothbrush-icon {
+      font-size: 4rem;
+      line-height: 1;
+      animation: wobble 3s ease-in-out infinite;
+    }
+    @keyframes wobble {
+      0%, 100% { transform: rotate(-8deg); }
+      50% { transform: rotate(8deg); }
+    }
+
+    .card h1 {
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      font-weight: 900;
+      color: var(--color-text);
+      line-height: 1.2;
+    }
+
+    .card p {
+      font-size: 1rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+      max-width: 30ch;
+    }
+
+    /* Start Button */
+    .btn-start {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, #4fc3f7, #0288d1);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 1.1rem;
+      font-weight: 800;
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 1rem 2.2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(2,136,209,0.35);
+      transition: transform var(--transition), box-shadow var(--transition);
+      width: 100%;
+      justify-content: center;
+    }
+    .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(2,136,209,0.45); }
+    .btn-start:active { transform: scale(0.97); }
+    .btn-start:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Waiting state */
+    #waiting-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+    }
+    #waiting-state.visible { display: flex; }
+
+    .waiting-pulse {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: var(--color-mint);
+      border: 3px solid var(--color-primary);
+      animation: pulse 1.4s ease-in-out infinite;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79,195,247,0.4); }
+      50% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(79,195,247,0); }
+    }
+
+    .waiting-text {
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+      font-weight: 600;
+    }
+
+    /* Timer (Video) state */
+    #timer-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+    }
+    #timer-state.visible { display: flex; }
+
+    #timer-video {
+      width: 100%;
+      max-width: 320px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(0,120,180,0.15);
+      background: #000;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 1rem;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .status-badge.active {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status-badge.paused {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .status-badge.active .status-dot { animation: blink 1s ease-in-out infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .cancel-btn {
+      background: none; border: none;
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0.25rem;
+    }
+
+    #start-view { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; width: 100%; }
+    #start-view.hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="bubbles" id="bubbles"></div>
+
+  <div class="card">
+
+    <!-- START VIEW -->
+    <div id="start-view">
+      <div class="toothbrush-icon">🪥</div>
+      <h1>Bereit zum Zähneputzen?</h1>
+      <p>Drücke den Knopf und putze deine Zähne sauber!</p>
+      <button class="btn-start" id="btn-start" onclick="startBrushing()">
+        <span>🦷</span> Zähneputzen starten
+      </button>
+    </div>
+
+    <!-- WAITING STATE -->
+    <div id="waiting-state">
+      <div class="waiting-pulse">🦷</div>
+      <div style="font-size:1.1rem;font-weight:800;">Warte auf Sensor...</div>
+      <p class="waiting-text">Leg los mit dem Zähneputzen,<br>dann startet der Timer automatisch!</p>
+      <button class="cancel-btn" onclick="cancelBrushing()">Abbrechen</button>
+    </div>
+
+    <!-- TIMER STATE -->
+    <div id="timer-state">
+      <div id="status-badge" class="status-badge active">
+        <span class="status-dot"></span> Sensor aktiv
+      </div>
+      <video id="timer-video" src="video/timer.webm" playsinline muted></video>
+      <button class="cancel-btn" onclick="cancelBrushing()">Abbrechen</button>
+    </div>
+
+  </div>
+
+  <script>
+    /* Bubbles */
+    const bubblesEl = document.getElementById('bubbles');
+    const colors = ['#4fc3f7','#81d4fa','#80cbc4','#a5d6a7','#fff9c4'];
+    for (let i = 0; i < 18; i++) {
+      const b = document.createElement('div');
+      b.className = 'bubble';
+      const size = 20 + Math.random() * 60;
+      b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${6+Math.random()*10}s;animation-delay:${Math.random()*12}s;`;
+      bubblesEl.appendChild(b);
+    }
+
+    /* State */
+    const startView    = document.getElementById('start-view');
+    const waitingState = document.getElementById('waiting-state');
+    const timerState   = document.getElementById('timer-state');
+    const video        = document.getElementById('timer-video');
+    const statusBadge  = document.getElementById('status-badge');
+
+    let state = 'idle';
+    let sensorTimeout = null;
+    const SENSOR_TIMEOUT_MS = 2000;
+
+    /* WebSocket */
+    const WS_URL = 'ws://localhost:81'; // <-- Sensor-IP anpassen
+    let ws = null;
+
+    function connectWebSocket() {
+      try {
+        ws = new WebSocket(WS_URL);
+        ws.onopen = () => console.log('WebSocket connected');
+        ws.onmessage = (event) => onSensorData(event.data);
+        ws.onerror = (e) => console.warn('WebSocket error', e);
+        ws.onclose = () => {
+          if (state === 'waiting' || state === 'running' || state === 'paused') {
+            setTimeout(connectWebSocket, 3000);
+          }
+        };
+      } catch(e) { console.warn('WS failed:', e); }
+    }
+
+    function onSensorData(data) {
+      if (state === 'waiting') transitionToRunning();
+      else if (state === 'paused') resumeVideo();
+      clearTimeout(sensorTimeout);
+      sensorTimeout = setTimeout(onSensorInactive, SENSOR_TIMEOUT_MS);
+    }
+
+    function onSensorInactive() {
+      if (state === 'running') pauseVideo();
+    }
+
+    function startBrushing() {
+      state = 'waiting';
+      startView.classList.add('hidden');
+      waitingState.classList.add('visible');
+      connectWebSocket();
+    }
+
+    function transitionToRunning() {
+      state = 'running';
+      waitingState.classList.remove('visible');
+      timerState.classList.add('visible');
+      video.play();
+      updateBadge(true);
+    }
+
+    function pauseVideo() {
+      state = 'paused';
+      video.pause();
+      updateBadge(false);
+    }
+
+    function resumeVideo() {
+      state = 'running';
+      video.play();
+      updateBadge(true);
+    }
+
+    function updateBadge(active) {
+      statusBadge.className = 'status-badge ' + (active ? 'active' : 'paused');
+      statusBadge.innerHTML = active
+        ? '<span class="status-dot"></span> Sensor aktiv'
+        : '<span class="status-dot"></span> Unterbrochen…';
+    }
+
+    function cancelBrushing() {
+      state = 'idle';
+      clearTimeout(sensorTimeout);
+      if (ws) { ws.close(); ws = null; }
+      video.pause();
+      video.currentTime = 0;
+      waitingState.classList.remove('visible');
+      timerState.classList.remove('visible');
+      startView.classList.remove('hidden');
+    }
+
+    video.addEventListener('ended', () => {
+      clearTimeout(sensorTimeout);
+      if (ws) { ws.close(); ws = null; }
+      window.location.href = 'success.html';
+    });
+  </script>
+</body>
+</html>
